@@ -40,11 +40,16 @@ const Index = () => {
     setDocumentContent(newContent);
   };
 
+  const handleFormChange = (markdownContent: string, newSwzData: any) => {
+    setDocumentContent(markdownContent);
+    setSwzData(newSwzData);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-background">
       <Header />
       <div className="flex-1 flex overflow-hidden">
-        <ParametersPanel data={swzData} />
+        <ParametersPanel data={swzData} onFormChange={handleFormChange} />
         <DocumentEditor 
           content={documentContent} 
           onContentChange={handleContentChange}

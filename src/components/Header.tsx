@@ -1,4 +1,4 @@
-import { FileText, Save, FileDown } from "lucide-react";
+import { FileText, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -16,10 +16,6 @@ export function Header() {
         <Button variant="outline" size="sm" className="gap-2">
           <Save className="w-4 h-4" />
           Zapisz
-        </Button>
-        <Button size="sm" className="gap-2">
-          <FileDown className="w-4 h-4" />
-          Eksportuj PDF
         </Button>
         
         <div className="flex items-center gap-3 ml-4 pl-4 border-l border-border">

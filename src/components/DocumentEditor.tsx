@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Pencil, Eye, Save, X, Download, Loader2 } from "lucide-react";
+import { Pencil, Eye, Save, X, Download, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import MDEditor from "@uiw/react-md-editor";
 import { generatePdf, downloadPdf } from "./PdfGenerator";
+import { toDocx } from "@md2docx/react-markdown";
+import { saveAs } from "file-saver";
 
 interface DocumentEditorProps {
   content?: string;
@@ -51,6 +53,7 @@ export function DocumentEditor({ content, onContentChange }: DocumentEditorProps
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content || defaultMarkdown);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingDocx, setIsGeneratingDocx] = useState(false);
   const displayContent = content || defaultMarkdown;
 
   const handleEdit = () => {
@@ -79,6 +82,18 @@ export function DocumentEditor({ content, onContentChange }: DocumentEditorProps
       console.error('Błąd podczas generowania PDF:', error);
     } finally {
       setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleDownloadDocx = async () => {
+    setIsGeneratingDocx(true);
+    try {
+      const blob = await toDocx(displayContent);
+      saveAs(blob, 'dokument-swz.docx');
+    } catch (error) {
+      console.error('Błąd podczas generowania DOCX:', error);
+    } finally {
+      setIsGeneratingDocx(false);
     }
   };
 
@@ -131,6 +146,20 @@ export function DocumentEditor({ content, onContentChange }: DocumentEditorProps
                 <Download className="w-4 h-4" />
               )}
               Pobierz PDF
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleDownloadDocx}
+              disabled={isGeneratingDocx}
+            >
+              {isGeneratingDocx ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4" />
+              )}
+              Pobierz DOCX
             </Button>
           </>
         )}

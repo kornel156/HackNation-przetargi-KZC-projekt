@@ -1,73 +1,120 @@
-# Welcome to your Lovable project
+# AILex: System Hiper-Precyzyjnej Analizy Przetargowej
 
-## Project info
+> **Projekt zrealizowany w ramach HackNation 2025**
+> *Wyzwanie: Asystent AI dla administracji - precyzja i tempo decyzji administracyjnych w służbie państwa.*
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+[![Prezentacja Projektu](https://img.shields.io/badge/Prezentacja-PDF-red?style=for-the-badge&logo=adobeacrobatreader)](./link_do_prezentacji.pdf)
+[![Wideo Demo](https://img.shields.io/badge/Wideo-Demo-blue?style=for-the-badge&logo=youtube)](LINK_DO_TWOJEGO_FILMU)
+[![Licencja](https://img.shields.io/badge/Licencja-MIT-green?style=for-the-badge)](./LICENSE)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🏛️ O Projekcie
 
-**Use Lovable**
+**AILex** to zaawansowany system klasy Enterprise wspierający orzeczników i urzędników w procesie analizy dokumentacji przetargowej (SWZ). Projekt rozwiązuje problem *wąskich gardeł* decyzyjnych wynikających z obszerności dokumentacji i presji czasu.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+System wyróżnia się **ekstremalną granulacją procesu analitycznego** – zamiast jednego modelu, zastosowano tu architekturę roju (Swarm Architecture) składającą się z **56 wyspecjalizowanych agentów**, co gwarantuje niespotykaną dotąd precyzję w wyłapywaniu niuansów prawnych.
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 🧠 Architektura: Massive Multi-Agent System
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Sercem rozwiązania jest orkiestrator zarządzający armią dedykowanych mikro-agentów. Każdy aspekt dokumentu jest analizowany niezależnie, co eliminuje ryzyko pominięcia kluczowych informacji.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 1. Centralny Orkiestrator (The Conductor)
+* **Rola:** Nadzoruje cały proces, zarządza kolejką zadań i dystrybuuje fragmenty dokumentacji do odpowiednich podzespołów.
+* **Funkcja:** Scalanie (Map-Reduce) wyników cząstkowych w spójny raport końcowy.
 
-Follow these steps:
+### 2. Rój Analityczny SWZ (23 Dedykowanych Agentów)
+Dokumentacja SWZ (Specyfikacja Warunków Zamówienia) jest rozbijana na czynniki pierwsze. Każdy z **23 agentów** odpowiada za weryfikację jednego, konkretnego punktu dokumentacji, m.in.:
+* 🤖 **Agent 01:** Przedmiot Zamówienia i CPV.
+* 🤖 **Agent 05:** Warunki udziału (Wiedza i doświadczenie).
+* 🤖 **Agent 12:** Kary umowne i odstąpienie od umowy.
+* 🤖 **Agent 18:** Termin związania ofertą i wadia.
+* 🤖 **Agent 23:** Kryteria oceny ofert (Cena vs Jakość).
+* *...i 18 innych agentów specjalistycznych.*
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 3. Rój Syntezy i Decyzji (33 Agenci Podsumowania)
+Po zebraniu faktów, do pracy przystępuje **33 agentów wnioskujących**, którzy przetwarzają dane na użyteczne rekomendacje:
+* 📝 **Agenci Redakcyjni:** Generowanie poszczególnych sekcji uzasadnienia decyzji.
+* ⚖️ **Agenci Ryzyka:** Osobna ocena ryzyk prawnych, finansowych i terminowych.
+* ✅ **Agenci Compliance:** Weryfikacja zgodności z PZP (Prawo Zamówień Publicznych) i RODO.
+* 🔎 **Cross-Check Agents:** Agenci weryfikujący spójność ustaleń między pozostałymi agentami.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🔐 Bezpieczeństwo i Dane (On-Premise)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Ze względu na wrażliwość danych przetargowych, AILex został zaprojektowany w architekturze **Local-First / On-Premise**:
 
-**Edit a file directly in GitHub**
+* **100% Prywatności:** LLM jest hostowany bezpośrednio na serwerach organizacji. Żaden fragment SWZ nie opuszcza infrastruktury urzędu.
+* **Brak Chmury Publicznej:** Eliminacja ryzyka przesyłania danych do zewnętrznych dostawców (brak API OpenAI/Anthropic w produkcji).
+* **Guardrails:** System posiada wbudowane bezpieczniki uniemożliwiające generowanie treści niezgodnych z etyką urzędniczą.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 🛠 Technologie
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Projekt łączy skalowalny backend z intuicyjnym frontendem:
 
-## What technologies are used for this project?
+* **Backend & AI Orchestration:**
+    * Python 3.11
+    * **LangGraph / LangChain** (Zarządzanie stanem 56 agentów)
+    * Local LLM (np. Bielik-7B-v2, Llama-3-70B)
+* **Baza Wiedzy:**
+    * Vector Store (Qdrant/ChromaDB) do obsługi orzecznictwa KIO.
+* **Frontend:**
+    * React + TypeScript
+    * Vite & Tailwind CSS (Dashboard analityczny)
+    * shadcn/ui (Komponenty interfejsu)
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🚀 Instalacja i Uruchomienie
 
-## How can I deploy this project?
+### Wymagania wstępne
+* Docker
+* Python 3.11+
+* Node.js 18+
+* Zalecane GPU z min. 24GB VRAM (dla lokalnej obsługi wszystkich agentów równolegle)
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Instrukcja
 
-## Can I connect a custom domain to my Lovable project?
+1.  **Sklonuj repozytorium:**
+    ```bash
+    git clone [https://github.com/twoj-nick/AILex-HackNation.git](https://github.com/twoj-nick/AILex-HackNation.git)
+    cd AILex-HackNation
+    ```
 
-Yes, you can!
+2.  **Uruchomienie Backendu (Orkiestratora):**
+    ```bash
+    cd backend
+    pip install -r requirements.txt
+    python main.py
+    ```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+3.  **Uruchomienie Frontendu:**
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+## 📊 Scenariusz Użycia (Use Case)
+
+1.  **Input:** Urzędnik wgrywa plik PDF z SWZ (200 stron).
+2.  **Proces:** Orkiestrator uruchamia **23 agentów SWZ**. Każdy z nich w ciągu 30 sekund analizuje swój przydzielony punkt.
+3.  **Wnioskowanie:** Wyniki trafiają do **33 agentów podsumowania**, którzy budują profil ryzyka i projekt decyzji.
+4.  **Output:** Po 2 minutach użytkownik otrzymuje gotowy raport z podświetlonymi 3 krytycznymi ryzykami oraz gotowy draft pisma do wykonawcy.
+
+---
+
+## 👥 Zespół HackNation
+
+* **@kornel156** - Architektura Systemu Wieloagentowego & Backend
+* **@pasjonatprogramowania** - Frontend, UX & Integracja
+
+---
+*Wygenerowano dla potrzeb dokumentacji HackNation 2025. System zgodny z wymogami bezpieczeństwa sektora publicznego.*

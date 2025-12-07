@@ -1,5 +1,7 @@
-import { FileText } from "lucide-react";
+import { FileText, BarChart3 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export function Header() {
   return (
@@ -12,6 +14,12 @@ export function Header() {
       </div>
       
       <div className="flex items-center gap-3">
+        <Link to="/analiza-ofert">
+          <Button variant="outline" size="sm" className="gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Analiza Ofert
+          </Button>
+        </Link>
         <div className="flex items-center gap-3 pl-4 border-l border-border">
           <div className="text-right">
             <p className="text-sm font-medium text-foreground">Jan Kowalski</p>

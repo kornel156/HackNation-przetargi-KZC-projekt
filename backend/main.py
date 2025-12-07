@@ -28,6 +28,7 @@ class ChatResponse(BaseModel):
     to_render: bool
     active_section: str
     state: dict
+    markdown_content: str
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
@@ -37,7 +38,8 @@ async def chat(request: ChatRequest):
             response=result["response"], 
             to_render=result["to_render"],
             active_section=str(result["active_section"]),
-            state=manager.get_state()
+            state=manager.get_state(),
+            markdown_content=result["markdown_content"]
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

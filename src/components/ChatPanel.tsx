@@ -68,6 +68,11 @@ export function ChatPanel({ onDocumentUpdate }: ChatPanelProps) {
       };
 
       setMessages(prev => [...prev, botMsg]);
+      
+      // Automatycznie aktualizuj dokument markdown na bieżąco
+      if (data.markdown_content) {
+        onDocumentUpdate(data.markdown_content, data.swz_data);
+      }
 
     } catch (error) {
       toast({

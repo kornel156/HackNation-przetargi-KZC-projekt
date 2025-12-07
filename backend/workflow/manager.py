@@ -148,11 +148,15 @@ class WorkflowManager:
 
         self.state.add_message(role=responder_role, content=final_response, to_render=to_render)
         
+        # Generate markdown from current SWZ data
+        markdown_content = self.state.swz_data.generate_markdown()
+        
         return {
             "response": final_response,
             "to_render": to_render,
             "active_section": self.state.active_section,
-            "swz_data": self.state.swz_data.model_dump()
+            "swz_data": self.state.swz_data.model_dump(),
+            "markdown_content": markdown_content
         }
 
     def get_state(self) -> Dict[str, Any]:

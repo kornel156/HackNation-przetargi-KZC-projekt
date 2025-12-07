@@ -124,6 +124,195 @@ class SWZData(BaseModel):
     # Generated Content (Stored as strings for now, or dicts)
     sections: Dict[str, str] = Field(default_factory=dict)
 
+    def generate_markdown(self) -> str:
+        """Generuje markdown SWZ na podstawie aktualnych danych"""
+        md_parts = []
+        
+        # Nagłówek dokumentu
+        md_parts.append("# SPECYFIKACJA WARUNKÓW ZAMÓWIENIA (SWZ)")
+        md_parts.append("")
+        
+        # Sekcja I: Dane Zamawiającego
+        has_basic_data = any([
+            self.organization_name, self.address, self.nip, 
+            self.regon, self.contact_email, self.phone, 
+            self.website, self.person_responsible
+        ])
+        
+        if has_basic_data:
+            md_parts.append("## I. DANE ZAMAWIAJĄCEGO")
+            md_parts.append("")
+            if self.organization_name:
+                md_parts.append(f"**Nazwa zamawiającego:** {self.organization_name}")
+            if self.address:
+                md_parts.append(f"**Adres:** {self.address}")
+            if self.nip:
+                md_parts.append(f"**NIP:** {self.nip}")
+            if self.regon:
+                md_parts.append(f"**REGON:** {self.regon}")
+            if self.contact_email:
+                md_parts.append(f"**Email:** {self.contact_email}")
+            if self.phone:
+                md_parts.append(f"**Telefon:** {self.phone}")
+            if self.website:
+                md_parts.append(f"**Strona internetowa:** {self.website}")
+            if self.person_responsible:
+                md_parts.append(f"**Osoba odpowiedzialna:** {self.person_responsible}")
+            md_parts.append("")
+        
+        # Sekcja II: Tryb i Przedmiot Zamówienia
+        has_subject_data = any([
+            self.procurement_mode, self.legal_basis, self.procurement_title,
+            self.procurement_id, self.cpv_codes, self.procurement_type, self.description
+        ])
+        
+        if has_subject_data:
+            md_parts.append("## II. TRYB UDZIELENIA ZAMÓWIENIA I PRZEDMIOT")
+            md_parts.append("")
+            if self.procurement_mode:
+                md_parts.append(f"**Tryb postępowania:** {self.procurement_mode}")
+            if self.legal_basis:
+                md_parts.append(f"**Podstawa prawna:** {self.legal_basis}")
+            if self.procurement_title:
+                md_parts.append(f"**Nazwa zamówienia:** {self.procurement_title}")
+            if self.procurement_id:
+                md_parts.append(f"**Numer referencyjny:** {self.procurement_id}")
+            if self.cpv_codes:
+                md_parts.append(f"**Kody CPV:** {', '.join(self.cpv_codes)}")
+            if self.procurement_type:
+                md_parts.append(f"**Rodzaj zamówienia:** {self.procurement_type}")
+            if self.description:
+                md_parts.append(f"\n**Opis przedmiotu zamówienia:**\n\n{self.description}")
+            md_parts.append("")
+        
+        # Sekcja III: Terminy
+        has_dates = any([
+            self.execution_deadline, self.variants_allowed, 
+            self.submission_deadline, self.opening_date, self.binding_period
+        ])
+        
+        if has_dates:
+            md_parts.append("## III. TERMINY")
+            md_parts.append("")
+            if self.execution_deadline:
+                md_parts.append(f"**Termin wykonania zamówienia:** {self.execution_deadline}")
+            md_parts.append(f"**Oferty wariantowe:** {'Dopuszczone' if self.variants_allowed else 'Niedopuszczone'}")
+            if self.submission_deadline:
+                md_parts.append(f"**Termin składania ofert:** {self.submission_deadline}")
+            if self.opening_date:
+                md_parts.append(f"**Termin otwarcia ofert:** {self.opening_date}")
+            if self.binding_period:
+                md_parts.append(f"**Termin związania ofertą:** {self.binding_period}")
+            md_parts.append("")
+        
+        # Sekcja IV: Kryteria Oceny
+        has_criteria = any([self.criteria, self.budget, self.quality_features])
+        
+        if has_criteria:
+            md_parts.append("## IV. KRYTERIA OCENY OFERT")
+            md_parts.append("")
+            if self.criteria:
+                md_parts.append("**Kryteria:**")
+                for criterion in self.criteria:
+                    name = criterion.get("name", "")
+                    weight = criterion.get("weight", "")
+                    md_parts.append(f"- {name}: {weight}%")
+            if self.budget:
+                md_parts.append(f"\n**Budżet:** {self.budget} PLN")
+            if self.quality_features:
+                md_parts.append("\n**Cechy jakościowe:**")
+                for feature in self.quality_features:
+                    md_parts.append(f"- {feature}")
+            md_parts.append("")
+        
+        # Sekcja V: Wykluczenia i Warunki
+        has_exclusions = any([
+            self.exclusion_grounds_mandatory, self.exclusion_grounds_optional,
+            self.participation_conditions, self.required_documents
+        ])
+        
+        if has_exclusions:
+            md_parts.append("## V. WARUNKI UDZIAŁU I WYKLUCZENIA")
+            md_parts.append("")
+            if self.exclusion_grounds_mandatory:
+                md_parts.append("**Obligatoryjne podstawy wykluczenia:**")
+                for ground in self.exclusion_grounds_mandatory:
+                    md_parts.append(f"- {ground}")
+            if self.exclusion_grounds_optional:
+                md_parts.append("\n**Fakultatywne podstawy wykluczenia:**")
+                for ground in self.exclusion_grounds_optional:
+                    md_parts.append(f"- {ground}")
+            if self.participation_conditions:
+                md_parts.append("\n**Warunki udziału w postępowaniu:**")
+                for condition in self.participation_conditions:
+                    md_parts.append(f"- {condition}")
+            if self.required_documents:
+                md_parts.append("\n**Wymagane dokumenty:**")
+                for doc in self.required_documents:
+                    md_parts.append(f"- {doc}")
+            md_parts.append("")
+        
+        # Sekcja VI: Umowa i Ochrona Prawna
+        has_contract = any([self.contract_terms, self.legal_protection_info])
+        
+        if has_contract:
+            md_parts.append("## VI. WARUNKI UMOWY I ŚRODKI OCHRONY PRAWNEJ")
+            md_parts.append("")
+            if self.contract_terms:
+                md_parts.append("**Warunki umowy:**")
+                for term in self.contract_terms:
+                    md_parts.append(f"- {term}")
+            if self.legal_protection_info:
+                md_parts.append(f"\n**Środki ochrony prawnej:**\n\n{self.legal_protection_info}")
+            md_parts.append("")
+        
+        # Sekcja VII: Komunikacja
+        has_communication = any([self.communication_rules, self.evaluation_procedure])
+        
+        if has_communication:
+            md_parts.append("## VII. KOMUNIKACJA I PROCEDURA")
+            md_parts.append("")
+            if self.communication_rules:
+                md_parts.append(f"**Zasady komunikacji:**\n\n{self.communication_rules}")
+            if self.evaluation_procedure:
+                md_parts.append(f"\n**Procedura oceny:**\n\n{self.evaluation_procedure}")
+            md_parts.append("")
+        
+        # Sekcja VIII: Dodatkowe Wymagania
+        has_additional = any([
+            self.consortium_rules, self.subcontracting_rules, self.lots,
+            self.employment_requirements, self.social_clauses, 
+            self.warranty_terms, self.special_requirements
+        ])
+        
+        if has_additional:
+            md_parts.append("## VIII. DODATKOWE WYMAGANIA")
+            md_parts.append("")
+            if self.consortium_rules:
+                md_parts.append(f"**Zasady dla konsorcjów:**\n\n{self.consortium_rules}")
+            if self.subcontracting_rules:
+                md_parts.append(f"\n**Zasady podwykonawstwa:**\n\n{self.subcontracting_rules}")
+            if self.lots:
+                md_parts.append("\n**Części zamówienia:**")
+                for lot in self.lots:
+                    md_parts.append(f"- {lot.get('name', lot)}")
+            if self.employment_requirements:
+                md_parts.append(f"\n**Wymagania zatrudnienia:**\n\n{self.employment_requirements}")
+            if self.social_clauses:
+                md_parts.append(f"\n**Klauzule społeczne:**\n\n{self.social_clauses}")
+            if self.warranty_terms:
+                md_parts.append(f"\n**Warunki gwarancji:**\n\n{self.warranty_terms}")
+            if self.special_requirements:
+                md_parts.append(f"\n**Wymagania specjalne:**\n\n{self.special_requirements}")
+            md_parts.append("")
+        
+        # Jeśli nie ma żadnych danych, dodaj placeholder
+        if not any([has_basic_data, has_subject_data, has_dates, has_criteria, 
+                    has_exclusions, has_contract, has_communication, has_additional]):
+            md_parts.append("*Rozpocznij rozmowę z asystentem, aby uzupełnić dane dokumentu SWZ.*")
+        
+        return "\n".join(md_parts)
+
 class WorkflowState(BaseModel):
     history: List[Message] = Field(default_factory=list)
     swz_data: SWZData = Field(default_factory=SWZData)

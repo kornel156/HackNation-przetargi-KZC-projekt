@@ -9,10 +9,14 @@ const Index = () => {
   const [swzData, setSwzData] = useState<any>(null);
 
   const handleDocumentUpdate = (newContent: string, newData: any) => {
-    // Append new content to existing content
-    setDocumentContent((prev) => prev + "\n\n" + newContent);
+    // Zastąp całą treść dokumentu nowym markdown (generowanym na bieżąco)
+    setDocumentContent(newContent);
     // Merge new data
     setSwzData((prev: any) => ({ ...prev, ...newData }));
+  };
+
+  const handleContentChange = (newContent: string) => {
+    setDocumentContent(newContent);
   };
 
   return (
@@ -20,7 +24,7 @@ const Index = () => {
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <ParametersPanel data={swzData} />
-        <DocumentEditor content={documentContent} />
+        <DocumentEditor content={documentContent} onContentChange={handleContentChange} />
         <ChatPanel onDocumentUpdate={handleDocumentUpdate} />
       </div>
     </div>

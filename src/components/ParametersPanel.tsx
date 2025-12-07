@@ -166,10 +166,6 @@ export function ParametersPanel({ data }: { data?: any }) {
           )}
         </div>
       </AccordionSection>
-
-      <Button className="w-full mt-auto">
-        Generuj szkic SWZ
-      </Button>
     </aside>
   );
 }

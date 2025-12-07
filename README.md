@@ -113,8 +113,6 @@ Projekt łączy skalowalny backend z intuicyjnym frontendem:
 
 ## 👥 Zespół HackNation
 
-* **@kornel156** - Architektura Systemu Wieloagentowego & Backend
-* **@pasjonatprogramowania** - Frontend, UX & Integracja
-
+* **KZC WAT**
 ---
 *Wygenerowano dla potrzeb dokumentacji HackNation 2025. System zgodny z wymogami bezpieczeństwa sektora publicznego.*

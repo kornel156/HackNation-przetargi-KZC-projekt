@@ -62,3 +62,4 @@ class WorkflowState(BaseModel):
     swz_data: SWZData = Field(default_factory=SWZData)
     current_agent: AgentRole = AgentRole.ORCHESTRATOR
     waiting_for_user: bool = False
+    swz_draft: Optional[str] = None  # Current markdown draft of the SWZ document

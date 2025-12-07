@@ -48,5 +48,14 @@ async def chat(request: ChatRequest):
 async def get_state():
     return manager.get_state()
 
+@app.get("/initial-template")
+async def get_initial_template():
+    """Zwraca początkowy szablon SWZ z placeholderami"""
+    markdown_content = manager.state.swz_data.generate_markdown()
+    return {
+        "markdown_content": markdown_content,
+        "swz_data": manager.state.swz_data.model_dump()
+    }
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

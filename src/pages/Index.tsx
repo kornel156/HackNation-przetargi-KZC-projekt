@@ -16,7 +16,7 @@ const Index = () => {
       <Header />
       <div className="flex-1 flex overflow-hidden">
         <ParametersPanel />
-        <DocumentEditor content={documentContent} />
+        <DocumentEditor content={documentContent} onContentChange={handleDocumentUpdate} />
         <ChatPanel onDocumentUpdate={handleDocumentUpdate} />
       </div>
     </div>

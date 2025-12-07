@@ -1,9 +1,13 @@
-import { Bold, Italic, Underline, List, Undo, Redo, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { Pencil, Eye, Save, X, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
+import MDEditor from "@uiw/react-md-editor";
+import { generatePdf, downloadPdf } from "./PdfGenerator";
 
 interface DocumentEditorProps {
   content?: string;
+  onContentChange?: (content: string) => void;
 }
 
 const defaultMarkdown = `# SPECYFIKACJA WARUNKÓW ZAMÓWIENIA (SWZ)
@@ -43,39 +47,109 @@ Postępowanie prowadzone jest w trybie podstawowym bez negocjacji na podstawie a
 Termin realizacji zamówienia: **12 miesięcy** od daty podpisania umowy.
 `;
 
-export function DocumentEditor({ content = defaultMarkdown }: DocumentEditorProps) {
+export function DocumentEditor({ content, onContentChange }: DocumentEditorProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(content || defaultMarkdown);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const displayContent = content || defaultMarkdown;
+
+  const handleEdit = () => {
+    setEditedContent(displayContent);
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    if (onContentChange) {
+      onContentChange(editedContent);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditedContent(displayContent);
+    setIsEditing(false);
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      const blob = await generatePdf(displayContent);
+      downloadPdf(blob, 'dokument-swz.pdf');
+    } catch (error) {
+      console.error('Błąd podczas generowania PDF:', error);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-muted/30 overflow-hidden">
       {/* Toolbar */}
       <div className="h-12 border-b border-border bg-card px-4 flex items-center gap-2 shadow-soft">
-        <Button variant="toolbar" size="icon-sm">
-          <Undo className="w-4 h-4" />
-        </Button>
-        <Button variant="toolbar" size="icon-sm">
-          <Redo className="w-4 h-4" />
-        </Button>
+        {isEditing ? (
+          <>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleSave}
+            >
+              <Save className="w-4 h-4" />
+              Zapisz
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleCancel}
+            >
+              <X className="w-4 h-4" />
+              Anuluj
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleEdit}
+            >
+              <Pencil className="w-4 h-4" />
+              Edytuj
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf}
+            >
+              {isGeneratingPdf ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              Pobierz PDF
+            </Button>
+          </>
+        )}
         
         <div className="w-px h-6 bg-border mx-2" />
         
-        <Button variant="toolbar" size="sm" className="gap-1">
-          Normalny tekst
-          <ChevronDown className="w-3 h-3" />
-        </Button>
-        
-        <div className="w-px h-6 bg-border mx-2" />
-        
-        <Button variant="toolbar" size="icon-sm">
-          <Bold className="w-4 h-4" />
-        </Button>
-        <Button variant="toolbar" size="icon-sm">
-          <Italic className="w-4 h-4" />
-        </Button>
-        <Button variant="toolbar" size="icon-sm">
-          <Underline className="w-4 h-4" />
-        </Button>
-        <Button variant="toolbar" size="icon-sm">
-          <List className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {isEditing ? (
+            <>
+              <Pencil className="w-4 h-4" />
+              <span>Tryb edycji</span>
+            </>
+          ) : (
+            <>
+              <Eye className="w-4 h-4" />
+              <span>Tryb podglądu</span>
+            </>
+          )}
+        </div>
         
         <div className="flex-1" />
         
@@ -85,12 +159,27 @@ export function DocumentEditor({ content = defaultMarkdown }: DocumentEditorProp
       </div>
 
       {/* Document Content */}
-      <div className="flex-1 overflow-y-auto p-8 scrollbar-thin">
-        <div className="max-w-3xl mx-auto bg-card rounded-lg shadow-medium p-12 min-h-[800px] animate-fade-in">
-          <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground">
-            <ReactMarkdown>{content}</ReactMarkdown>
-          </article>
-        </div>
+      <div className="flex-1 overflow-y-auto scrollbar-thin" data-color-mode="light">
+        {isEditing ? (
+          <div className="h-full">
+            <MDEditor
+              value={editedContent}
+              onChange={(val) => setEditedContent(val || "")}
+              height="100%"
+              preview="live"
+              className="!border-0"
+              visibleDragbar={false}
+            />
+          </div>
+        ) : (
+          <div className="p-8">
+            <div className="max-w-3xl mx-auto bg-card rounded-lg shadow-medium p-12 min-h-[800px] animate-fade-in">
+              <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground">
+                <ReactMarkdown>{displayContent}</ReactMarkdown>
+              </article>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

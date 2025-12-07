@@ -1,11 +1,19 @@
 import { useState } from "react";
-import { Pencil, Eye, Save, X, Download, Loader2, FileText } from "lucide-react";
+import { Pencil, Eye, Save, X, Download, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import MDEditor from "@uiw/react-md-editor";
 import { generatePdf, downloadPdf } from "./PdfGenerator";
-import { toDocx } from "@md2docx/react-markdown";
+import { toDocx } from "mdast2docx";
+import { unified } from "unified";
+import remarkParse from "remark-parse";
 import { saveAs } from "file-saver";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DocumentEditorProps {
   content?: string;
@@ -88,8 +96,11 @@ export function DocumentEditor({ content, onContentChange }: DocumentEditorProps
   const handleDownloadDocx = async () => {
     setIsGeneratingDocx(true);
     try {
-      const blob = await toDocx(displayContent);
-      saveAs(blob, 'dokument-swz.docx');
+      // Parse markdown to MDAST
+      const mdast = unified().use(remarkParse).parse(displayContent);
+      // Convert MDAST to DOCX
+      const docxBlob = await toDocx(mdast);
+      saveAs(docxBlob as Blob, 'dokument-swz.docx');
     } catch (error) {
       console.error('Błąd podczas generowania DOCX:', error);
     } finally {
@@ -133,34 +144,34 @@ export function DocumentEditor({ content, onContentChange }: DocumentEditorProps
               <Pencil className="w-4 h-4" />
               Edytuj
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2"
-              onClick={handleDownloadPdf}
-              disabled={isGeneratingPdf}
-            >
-              {isGeneratingPdf ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              Pobierz PDF
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2"
-              onClick={handleDownloadDocx}
-              disabled={isGeneratingDocx}
-            >
-              {isGeneratingDocx ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <FileText className="w-4 h-4" />
-              )}
-              Pobierz DOCX
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-2"
+                  disabled={isGeneratingPdf || isGeneratingDocx}
+                >
+                  {(isGeneratingPdf || isGeneratingDocx) ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  Pobierz
+                  <ChevronDown className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Pobierz PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownloadDocx} disabled={isGeneratingDocx}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Pobierz DOCX
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         )}
         

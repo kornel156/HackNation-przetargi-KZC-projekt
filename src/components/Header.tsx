@@ -1,5 +1,4 @@
-import { FileText, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Header() {
@@ -13,12 +12,7 @@ export function Header() {
       </div>
       
       <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" className="gap-2">
-          <Save className="w-4 h-4" />
-          Zapisz
-        </Button>
-        
-        <div className="flex items-center gap-3 ml-4 pl-4 border-l border-border">
+        <div className="flex items-center gap-3 pl-4 border-l border-border">
           <div className="text-right">
             <p className="text-sm font-medium text-foreground">Jan Kowalski</p>
             <p className="text-xs text-muted-foreground">Urząd Miejski</p>

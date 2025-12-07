@@ -1,64 +1,109 @@
 import { useState } from "react";
-import { Send, Bot, Trash2, User } from "lucide-react";
+import { Send, Bot, Trash2, User, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   time: string;
-  actions?: { label: string; onClick?: () => void }[];
+  toRender?: boolean;
+  swzData?: any;
+  pendingApproval?: boolean;
 }
 
-const initialMessages: Message[] = [
-  {
-    id: "1",
-    role: "assistant",
-    content: 'Cześć! Widzę, że tworzysz SWZ dla "Budowy hali sportowej". Czy chcesz, abym dodał standardowe zapisy dotyczące klauzuli waloryzacyjnej zgodnie z najnowszymi wytycznymi UZP?',
-    time: "10:23",
-  },
-  {
-    id: "2",
-    role: "user",
-    content: "Tak, proszę. Dodaj też wymóg zatrudnienia na umowę o pracę.",
-    time: "10:24",
-  },
-  {
-    id: "3",
-    role: "assistant",
-    content: 'Zaktualizowałem **Sekcję III** o zapisy dotyczące zatrudnienia (art. 95 Pzp). Zaznaczyłem zmiany na żółto.\n\nCo do waloryzacji, proponuję taki zapis w projekcie umowy:\n\n> "Wynagrodzenie podlega waloryzacji w przypadku zmiany cen materiałów lub kosztów..."',
-    time: "10:25",
-    actions: [
-      { label: "Wstaw do dokumentu" },
-      { label: "Edytuj treść" },
-    ],
-  },
-];
+interface ChatPanelProps {
+  onDocumentUpdate: (content: string, data: any) => void;
+}
 
-const quickActions = [
-  "Sprawdź błędy",
-  "Skróć opis",
-  "Dodaj warunek wiedzy",
-];
-
-export function ChatPanel() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+export function ChatPanel({ onDocumentUpdate }: ChatPanelProps) {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "1",
+      role: "assistant",
+      content: "Cześć! Jestem Twoim asystentem SWZ. W czym mogę pomóc?",
+      time: new Date().toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }),
+    }
+  ]);
   const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSend = () => {
-    if (!inputValue.trim()) return;
+  const handleSend = async () => {
+    if (!inputValue.trim() || isLoading) return;
     
-    const newMessage: Message = {
+    const userMsg: Message = {
       id: Date.now().toString(),
       role: "user",
       content: inputValue,
       time: new Date().toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }),
     };
     
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, userMsg]);
     setInputValue("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMsg.content }),
+      });
+
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const data = await response.json();
+      
+      const botMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: data.response,
+        time: new Date().toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }),
+        toRender: data.to_render,
+        swzData: data.swz_data,
+        pendingApproval: data.to_render // If it needs rendering, it needs approval
+      };
+
+      setMessages(prev => [...prev, botMsg]);
+
+    } catch (error) {
+      toast({
+        title: "Błąd",
+        description: "Nie udało się połączyć z asystentem.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApprove = (msg: Message) => {
+    if (msg.toRender && msg.content) {
+      onDocumentUpdate(msg.content, msg.swzData);
+      
+      // Update message to remove pending status
+      setMessages(prev => prev.map(m => 
+        m.id === msg.id ? { ...m, pendingApproval: false } : m
+      ));
+
+      toast({
+        title: "Zatwierdzono",
+        description: "Sekcja została dodana do dokumentu.",
+      });
+    }
+  };
+
+  const handleReject = (msgId: string) => {
+    setMessages(prev => prev.map(m => 
+      m.id === msgId ? { ...m, pendingApproval: false } : m
+    ));
+    toast({
+      title: "Odrzucono",
+      description: "Możesz poprosić asystenta o poprawki.",
+    });
   };
 
   return (
@@ -66,10 +111,10 @@ export function ChatPanel() {
       {/* Header */}
       <div className="h-12 border-b border-border px-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-success rounded-full animate-pulse-soft" />
-          <span className="font-medium text-sm text-foreground">Asystent AI</span>
+          <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-yellow-400 animate-pulse' : 'bg-success'}`} />
+          <span className="font-medium text-sm text-foreground">Asystent SWZ</span>
         </div>
-        <Button variant="ghost" size="icon-sm">
+        <Button variant="ghost" size="icon-sm" onClick={() => setMessages([])}>
           <Trash2 className="w-4 h-4 text-muted-foreground" />
         </Button>
       </div>
@@ -91,51 +136,48 @@ export function ChatPanel() {
               </div>
             )}
             
-            <div
-              className={cn(
-                "max-w-[280px] rounded-2xl px-4 py-2.5",
-                message.role === "user"
-                  ? "bg-chat-user text-primary-foreground rounded-br-md"
-                  : "bg-chat-assistant text-foreground rounded-bl-md"
-              )}
-            >
-              <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                {message.content.split(/(\*\*.*?\*\*)/).map((part, i) => {
-                  if (part.startsWith("**") && part.endsWith("**")) {
-                    return <strong key={i}>{part.slice(2, -2)}</strong>;
-                  }
-                  if (part.startsWith("> ")) {
-                    return (
-                      <span key={i} className="block mt-2 pl-3 border-l-2 border-primary/30 italic text-muted-foreground">
-                        {part.slice(2)}
-                      </span>
-                    );
-                  }
-                  return part;
-                })}
-              </p>
-              
-              {message.actions && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {message.actions.map((action, i) => (
-                    <Button
-                      key={i}
-                      variant="action"
-                      size="sm"
-                      className="h-7 text-xs"
-                    >
-                      {action.label}
-                    </Button>
-                  ))}
+            <div className="flex flex-col gap-2 max-w-[280px]">
+              <div
+                className={cn(
+                  "rounded-2xl px-4 py-2.5",
+                  message.role === "user"
+                    ? "bg-chat-user text-primary-foreground rounded-br-md"
+                    : "bg-chat-assistant text-foreground rounded-bl-md"
+                )}
+              >
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                  {message.content}
+                </p>
+                
+                <p className={cn(
+                  "text-[10px] mt-1",
+                  message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
+                )}>
+                  {message.time}
+                </p>
+              </div>
+
+              {/* Approval UI */}
+              {message.role === "assistant" && message.pendingApproval && (
+                <div className="flex gap-2 bg-muted/50 p-2 rounded-lg border border-border">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex-1 h-8 text-xs gap-1 hover:bg-green-100 hover:text-green-700 hover:border-green-200"
+                    onClick={() => handleApprove(message)}
+                  >
+                    <Check className="w-3 h-3" /> Zatwierdź
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex-1 h-8 text-xs gap-1 hover:bg-red-100 hover:text-red-700 hover:border-red-200"
+                    onClick={() => handleReject(message.id)}
+                  >
+                    <X className="w-3 h-3" /> Odrzuć
+                  </Button>
                 </div>
               )}
-              
-              <p className={cn(
-                "text-[10px] mt-1",
-                message.role === "user" ? "text-primary-foreground/70" : "text-muted-foreground"
-              )}>
-                {message.time}
-              </p>
             </div>
             
             {message.role === "user" && (
@@ -145,22 +187,20 @@ export function ChatPanel() {
             )}
           </div>
         ))}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="px-4 py-2 border-t border-border">
-        <div className="flex flex-wrap gap-2">
-          {quickActions.map((action) => (
-            <Button
-              key={action}
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs"
-            >
-              {action}
-            </Button>
-          ))}
-        </div>
+        {isLoading && (
+          <div className="flex gap-3">
+             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                <Bot className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <div className="bg-chat-assistant rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-foreground/30 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-foreground/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-foreground/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+          </div>
+        )}
       </div>
 
       {/* Input */}
@@ -172,19 +212,18 @@ export function ChatPanel() {
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="Zapytaj asystenta..."
             className="pr-10"
+            disabled={isLoading}
           />
           <Button
             variant="ghost"
             size="icon-sm"
             className="absolute right-1 top-1/2 -translate-y-1/2 text-primary hover:text-primary"
             onClick={handleSend}
+            disabled={isLoading}
           >
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-2 text-center">
-          AI może generować nieścisłości. Zweryfikuj dokument prawnie.
-        </p>
       </div>
     </aside>
   );

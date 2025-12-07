@@ -1,7 +1,6 @@
 from agents.base_agent import BaseAgent
-from workflow.state import WorkflowState, AgentRole, WorkflowPhase
+from workflow.state import AgentRole, WorkflowState, SWZSection
 import json
-import re
 
 class Orchestrator(BaseAgent):
     def __init__(self):
@@ -9,85 +8,45 @@ class Orchestrator(BaseAgent):
 
     def get_system_instruction(self) -> str:
         return """
-        You are the Orchestrator (Koordynator Procesu) of the SWZ-Architect system.
-        Your role is to manage the workflow and decide which agent should act next.
-        You do not generate the SWZ content yourself, but you direct the flow.
+        You are the Orchestrator of the SWZ Architect system.
+        Your job is to understand the user's intent and route them to the correct specialized agent.
         
-        The phases are:
-        1. INITIATION: Gather basic info (Interviewer).
-        2. LEGAL_RESEARCH: Research applicable laws (Legal Researcher).
-        3. LEGAL_CORE: Define mode and conditions (Legal Officer).
-        4. SPECS_CRITERIA: Define subject and criteria (Interviewer & Validator).
-        5. ASSEMBLY: Generate the document (Drafter).
-        6. AUDIT: Verify the document (Validator).
+        Available Agents/Sections:
+        - BASIC_DATA_AGENT: For organization details, address, contact info (Section I).
+        - SUBJECT_AGENT: For procurement title, description, CPV codes, mode (Section II & III).
+        - CRITERIA_AGENT: For evaluation criteria and weights (Section VII).
+        - LEGAL_RESEARCHER: For specific legal questions about PZP (Public Procurement Law).
         
-        IMPORTANT ROUTING RULES:
-        - If user asks to "generate", "create", "write", "draft" a document/SWZ -> route to "Drafter"
-        - If user asks to "check", "validate", "verify" -> route to "Validator"
-        - If user asks legal questions or about law/regulations -> route to "Legal Officer" or "Legal Researcher"
-        - If user provides information or answers questions -> route to "Interviewer"
-        - If user asks to edit, modify, update the document -> route to "Drafter"
-        
-        Analyze the current state and history.
-        Output a JSON object with:
-        - "next_agent": The role of the next agent to act. Must be one of: "Interviewer", "Legal Officer", "Legal Researcher", "Drafter", "Validator"
-        - "phase_update": (Optional) New phase to transition to.
-        - "thought": Your reasoning.
-        
-        Example:
+        Output a JSON object with the following structure:
         {
-            "next_agent": "Drafter",
-            "phase_update": "ASSEMBLY",
-            "thought": "User requested document generation."
+            "thought": "Reasoning for your decision",
+            "next_agent": "AgentRole (e.g., 'Basic Data Agent', 'Subject Agent', 'Criteria Agent', 'Legal Researcher', or 'Orchestrator' if unclear)",
+            "active_section": "SWZSection (e.g., 'I_BASIC_DATA', 'II_SUBJECT', 'VII_CRITERIA', or 'none')",
+            "response_to_user": "Optional message to user if you are handling it directly or transitioning"
         }
+        
+        If the user wants to start from the beginning, route to BASIC_DATA_AGENT.
+        If the user asks a legal question, route to LEGAL_RESEARCHER.
+        If the user provides data for a specific section, route to that section's agent.
         """
 
-    async def decide_next_step(self, state: WorkflowState) -> dict:
-        # Check for explicit document generation requests first
-        if state.history:
-            last_user_msg = None
-            for msg in reversed(state.history):
-                if msg.role == AgentRole.USER:
-                    last_user_msg = msg.content.lower()
-                    break
+    async def process(self, state: WorkflowState, user_input: str) -> str:
+        # The orchestrator analyzes the input and decides the next step
+        # It doesn't generate the final response usually, but directs the flow.
+        
+        prompt = f"""
+        {self.get_system_instruction()}
+        
+        Current Active Section: {state.active_section}
+        User Input: {user_input}
+        """
+        
+        response = self.model.generate_content(prompt).text
+        
+        # Clean up json block if present
+        if "```json" in response:
+            response = response.split("```json")[1].split("```")[0]
+        elif "```" in response:
+            response = response.split("```")[1].split("```")[0]
             
-            if last_user_msg:
-                # Direct routing for common requests
-                draft_keywords = ["wygeneruj", "stwórz", "napisz", "utwórz", "generuj", "draft", "dokument", "swz", "generate", "create"]
-                edit_keywords = ["edytuj", "zmień", "popraw", "dodaj", "usuń", "edit", "modify", "change", "add"]
-                validate_keywords = ["sprawdź", "zweryfikuj", "waliduj", "check", "validate", "verify"]
-                
-                if any(kw in last_user_msg for kw in draft_keywords):
-                    return {
-                        "next_agent": "Drafter",
-                        "phase_update": "ASSEMBLY",
-                        "thought": "User requested document generation or editing."
-                    }
-                
-                if any(kw in last_user_msg for kw in validate_keywords):
-                    return {
-                        "next_agent": "Validator",
-                        "phase_update": "AUDIT",
-                        "thought": "User requested document validation."
-                    }
-        
-        # Use LLM for more complex decisions
-        response = await self.process(state)
-        content = response["content"]
-        
-        # Clean up code blocks if present
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0]
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0]
-        
-        # Try to extract JSON from the response
-        json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
-        if json_match:
-            content = json_match.group()
-            
-        try:
-            return json.loads(content.strip())
-        except:
-            # Fallback if JSON parsing fails
-            return {"next_agent": "Interviewer", "thought": "Failed to parse decision, defaulting to Interviewer."}
+        return response.strip()

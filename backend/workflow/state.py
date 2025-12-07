@@ -1,35 +1,38 @@
 from enum import Enum
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
-
-class WorkflowPhase(str, Enum):
-    INITIATION = "INITIATION"
-    LEGAL_RESEARCH = "LEGAL_RESEARCH"
-    LEGAL_CORE = "LEGAL_CORE"
-    SPECS_CRITERIA = "SPECS_CRITERIA"
-    ASSEMBLY = "ASSEMBLY"
-    AUDIT = "AUDIT"
-    COMPLETED = "COMPLETED"
+import time
 
 class AgentRole(str, Enum):
+    USER = "User"
     ORCHESTRATOR = "Orchestrator"
     INTERVIEWER = "Interviewer"
     LEGAL_OFFICER = "Legal Officer"
     LEGAL_RESEARCHER = "Legal Researcher"
     DRAFTER = "Drafter"
     VALIDATOR = "Validator"
-    USER = "User"
+    # Specialized Agents
+    BASIC_DATA_AGENT = "Basic Data Agent"
+    SUBJECT_AGENT = "Subject Agent"
+    CRITERIA_AGENT = "Criteria Agent"
+
+class SWZSection(str, Enum):
+    NONE = "none"
+    I_BASIC_DATA = "I_BASIC_DATA"
+    II_SUBJECT = "II_SUBJECT"
+    III_EXCLUSION = "III_EXCLUSION"
+    IV_PROCEDURE = "IV_PROCEDURE"
+    V_DOCUMENTS = "V_DOCUMENTS"
+    VI_COMMUNICATION = "VI_COMMUNICATION"
+    VII_CRITERIA = "VII_CRITERIA"
+    # Add more as needed
 
 class Message(BaseModel):
     role: AgentRole
     content: str
-    timestamp: float = Field(default_factory=lambda: __import__("time").time())
+    timestamp: float = Field(default_factory=lambda: time.time())
     metadata: Dict[str, Any] = Field(default_factory=dict)
-
-class SWZSection(BaseModel):
-    title: str
-    content: str
-    validated: bool = False
+    to_render: bool = False # Flag to indicate if this message contains a finished section to render
 
 class SWZData(BaseModel):
     # Phase 1 Data
@@ -53,13 +56,20 @@ class SWZData(BaseModel):
     description: Optional[str] = None
     criteria: List[Dict[str, Any]] = Field(default_factory=list) # e.g. {"name": "Price", "weight": 60}
     
-    # Generated Content
-    sections: Dict[str, SWZSection] = Field(default_factory=dict)
+    # Generated Content (Stored as strings for now, or dicts)
+    sections: Dict[str, str] = Field(default_factory=dict)
 
 class WorkflowState(BaseModel):
-    phase: WorkflowPhase = WorkflowPhase.INITIATION
     history: List[Message] = Field(default_factory=list)
     swz_data: SWZData = Field(default_factory=SWZData)
+    active_section: SWZSection = SWZSection.NONE
     current_agent: AgentRole = AgentRole.ORCHESTRATOR
     waiting_for_user: bool = False
-    swz_draft: Optional[str] = None  # Current markdown draft of the SWZ document
+
+    def add_message(self, role: AgentRole, content: str, metadata: Dict[str, Any] = None, to_render: bool = False):
+        self.history.append(Message(
+            role=role, 
+            content=content, 
+            metadata=metadata or {},
+            to_render=to_render
+        ))

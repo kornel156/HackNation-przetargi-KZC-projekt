@@ -1,7 +1,6 @@
 from agents.base_agent import BaseAgent
-from workflow.state import WorkflowState, AgentRole, WorkflowPhase
+from workflow.state import AgentRole, WorkflowState, SWZSection
 import json
-import re
 
 class Orchestrator(BaseAgent):
     def __init__(self):
@@ -9,85 +8,75 @@ class Orchestrator(BaseAgent):
 
     def get_system_instruction(self) -> str:
         return """
-        You are the Orchestrator (Koordynator Procesu) of the SWZ-Architect system.
-        Your role is to manage the workflow and decide which agent should act next.
-        You do not generate the SWZ content yourself, but you direct the flow.
+        Jesteś głównym koordynatorem (Orkiestratorem) systemu do tworzenia SWZ.
+        Twoim zadaniem jest prowadzenie naturalnej rozmowy z użytkownikiem i kierowanie go do odpowiednich ekspertów (agentów).
+
+        Zasady komunikacji:
+        1. Mów jak pomocny kolega z pracy, a nie jak robot.
+        2. Unikaj sztywnych formułek typu "Jesteś orkiestratorem...".
+        3. Jeśli użytkownik się wita, przywitaj się krótko i zapytaj, od czego chcecie zacząć.
+        4. Jeśli użytkownik podaje dane, przekaż je do odpowiedniego agenta.
+
+        Dostępni Agenci:
+        - AGENT_DANE_ZAMAWIAJACEGO: Dane teleadresowe, NIP, osoba kontaktowa.
+        - AGENT_TRYB_PODSTAWA: Tryb (przetarg, zapytanie) i podstawa prawna.
+        - AGENT_NAZWA_REFERENCJA: Nazwa postępowania, numer referencyjny, CPV.
+        - AGENT_TYP_PRZEDMIOT: Opis przedmiotu, ilości, jednostki.
+        - AGENT_TERMIN_WYKONANIA: Termin realizacji, kary za opóźnienie.
+        - AGENT_WARIANTY: Czy dopuszczalne warianty.
+        - AGENT_TERMINY_SKLADANIA: Daty składania ofert.
+        - AGENT_OTWARCIE_OFERT: Daty otwarcia ofert.
+        - AGENT_TERMIN_ZWIAZANIA: Termin związania ofertą.
+        - AGENT_KRYTERIA_OCENY: Kryteria oceny (cena, jakość) i wagi.
+        - AGENT_CENA_KRYTERIUM: Budżet, metodyka ceny.
+        - AGENT_CECHY_JAKOSCIOWE: Wymogi jakościowe, standardy.
+        - AGENT_WYKLUCZENIA_OBOWIAZKOWE: Art. 108 Pzp.
+        - AGENT_WYKLUCZENIA_FAKULTATYWNE: Art. 109 Pzp.
+        - AGENT_WARUNKI_UDZIALU: Doświadczenie, kadra, zasoby.
+        - AGENT_DOKUMENTY_SRODKI: Lista dokumentów do złożenia.
+        - AGENT_UMOWA_PROJEKTOWANA: Wzór umowy, płatności, gwarancje.
+        - AGENT_SRODKI_OCHRONY: Pouczenie o KIO.
+        - AGENT_KOMUNIKACJA_ELEKTRONICZNA: Sposób komunikacji, platforma.
+        - AGENT_PROCEDURA_OCENY: Komisja, etapy oceny.
+        - AGENT_KONSORCJA_PODWYKONAWCY: Zasady dla konsorcjów.
+        - AGENT_CZESCI_ZAMOWIENIA: Podział na części (loty).
+        - AGENT_WYMOGI_ZATRUDNIENIA: Umowy o pracę (art. 138b).
+        - AGENT_KLAUZULE_SPOLECZNE: Aspekty społeczne/środowiskowe.
+        - AGENT_GWARANCJA_SERWIS: Gwarancja i rękojmia.
+        - AGENT_WYMAGANIA_SPECJALNE: Specyfika branżowa.
         
-        The phases are:
-        1. INITIATION: Gather basic info (Interviewer).
-        2. LEGAL_RESEARCH: Research applicable laws (Legal Researcher).
-        3. LEGAL_CORE: Define mode and conditions (Legal Officer).
-        4. SPECS_CRITERIA: Define subject and criteria (Interviewer & Validator).
-        5. ASSEMBLY: Generate the document (Drafter).
-        6. AUDIT: Verify the document (Validator).
+        Agenci Wspomagający (uruchamiani na żądanie lub na koniec):
+        - AGENT_WALIDACJA_GLOWNA: Sprawdzenie całości.
+        - AGENT_FORMATOWANIE: Generowanie dokumentu.
         
-        IMPORTANT ROUTING RULES:
-        - If user asks to "generate", "create", "write", "draft" a document/SWZ -> route to "Drafter"
-        - If user asks to "check", "validate", "verify" -> route to "Validator"
-        - If user asks legal questions or about law/regulations -> route to "Legal Officer" or "Legal Researcher"
-        - If user provides information or answers questions -> route to "Interviewer"
-        - If user asks to edit, modify, update the document -> route to "Drafter"
-        
-        Analyze the current state and history.
-        Output a JSON object with:
-        - "next_agent": The role of the next agent to act. Must be one of: "Interviewer", "Legal Officer", "Legal Researcher", "Drafter", "Validator"
-        - "phase_update": (Optional) New phase to transition to.
-        - "thought": Your reasoning.
-        
-        Example:
+        Zwróć obiekt JSON:
         {
-            "next_agent": "Drafter",
-            "phase_update": "ASSEMBLY",
-            "thought": "User requested document generation."
+            "thought": "Uzasadnienie decyzji",
+            "next_agent": "Nazwa Agenta (np. 'AGENT_DANE_ZAMAWIAJACEGO' lub 'Orchestrator')",
+            "active_section": "SWZSection (np. 'I_BASIC_DATA', 'II_SUBJECT' lub 'none')",
+            "response_to_user": "Wiadomość do użytkownika (jeśli to Ty odpowiadasz)"
         }
+        
+        Jeśli użytkownik dopiero zaczyna lub podaje dane zamawiającego (nazwa, adres, NIP), skieruj go do AGENT_DANE_ZAMAWIAJACEGO.
+        Jeśli użytkownik podaje opis przedmiotu, skieruj do AGENT_TYP_PRZEDMIOT.
+        Jeśli użytkownik pyta o kryteria, skieruj do AGENT_KRYTERIA_OCENY.
+        Jeśli użytkownik pyta o tryb (przetarg, zapytanie), skieruj do AGENT_TRYB_PODSTAWA.
         """
 
-    async def decide_next_step(self, state: WorkflowState) -> dict:
-        # Check for explicit document generation requests first
-        if state.history:
-            last_user_msg = None
-            for msg in reversed(state.history):
-                if msg.role == AgentRole.USER:
-                    last_user_msg = msg.content.lower()
-                    break
+    async def process(self, state: WorkflowState, user_input: str) -> str:
+        prompt = f"""
+        {self.get_system_instruction()}
+        
+        Current Active Section: {state.active_section}
+        User Input: {user_input}
+        """
+        
+        response = self.model.generate_content(prompt).text
+        
+        # Clean up json block if present
+        if "```json" in response:
+            response = response.split("```json")[1].split("```")[0]
+        elif "```" in response:
+            response = response.split("```")[1].split("```")[0]
             
-            if last_user_msg:
-                # Direct routing for common requests
-                draft_keywords = ["wygeneruj", "stwórz", "napisz", "utwórz", "generuj", "draft", "dokument", "swz", "generate", "create"]
-                edit_keywords = ["edytuj", "zmień", "popraw", "dodaj", "usuń", "edit", "modify", "change", "add"]
-                validate_keywords = ["sprawdź", "zweryfikuj", "waliduj", "check", "validate", "verify"]
-                
-                if any(kw in last_user_msg for kw in draft_keywords):
-                    return {
-                        "next_agent": "Drafter",
-                        "phase_update": "ASSEMBLY",
-                        "thought": "User requested document generation or editing."
-                    }
-                
-                if any(kw in last_user_msg for kw in validate_keywords):
-                    return {
-                        "next_agent": "Validator",
-                        "phase_update": "AUDIT",
-                        "thought": "User requested document validation."
-                    }
-        
-        # Use LLM for more complex decisions
-        response = await self.process(state)
-        content = response["content"]
-        
-        # Clean up code blocks if present
-        if "```json" in content:
-            content = content.split("```json")[1].split("```")[0]
-        elif "```" in content:
-            content = content.split("```")[1].split("```")[0]
-        
-        # Try to extract JSON from the response
-        json_match = re.search(r'\{[^{}]*\}', content, re.DOTALL)
-        if json_match:
-            content = json_match.group()
-            
-        try:
-            return json.loads(content.strip())
-        except:
-            # Fallback if JSON parsing fails
-            return {"next_agent": "Interviewer", "thought": "Failed to parse decision, defaulting to Interviewer."}
+        return response.strip()

@@ -53,7 +53,7 @@ function AccordionSection({ icon, title, children, defaultOpen = false }: Accord
   );
 }
 
-export function ParametersPanel() {
+export function ParametersPanel({ data }: { data?: any }) {
   return (
     <aside className="w-80 border-r border-border bg-background p-4 flex flex-col gap-4 overflow-y-auto scrollbar-thin">
       <div className="mb-2">
@@ -73,7 +73,7 @@ export function ParametersPanel() {
             </Label>
             <Input
               id="projectName"
-              defaultValue="Budowa hali sportowej przy SP nr 5"
+              defaultValue={data?.procurement_title || "Budowa hali sportowej przy SP nr 5"}
               className="mt-1"
             />
           </div>
@@ -83,7 +83,7 @@ export function ParametersPanel() {
             </Label>
             <Input
               id="refNumber"
-              defaultValue="ZP.271.1.2023"
+              defaultValue={data?.procurement_id || "ZP.271.1.2023"}
               className="mt-1 text-muted-foreground"
             />
           </div>
@@ -91,7 +91,7 @@ export function ParametersPanel() {
             <Label htmlFor="procurementType" className="text-xs text-muted-foreground">
               Tryb Zamówienia
             </Label>
-            <Select defaultValue="unlimited">
+            <Select defaultValue={data?.procurement_mode || "unlimited"}>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Wybierz tryb" />
               </SelectTrigger>
@@ -118,7 +118,7 @@ export function ParametersPanel() {
             <Input
               id="submissionDate"
               type="date"
-              defaultValue="2024-02-15"
+              defaultValue={data?.submission_deadline || "2024-02-15"}
               className="mt-1"
             />
           </div>
@@ -128,8 +128,8 @@ export function ParametersPanel() {
             </Label>
             <Input
               id="executionDate"
-              type="date"
-              defaultValue="2024-12-31"
+              type="text"
+              defaultValue={data?.execution_deadline || "2024-12-31"}
               className="mt-1"
             />
           </div>
@@ -141,18 +141,29 @@ export function ParametersPanel() {
         title="Kryteria Oceny"
       >
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground">Cena</span>
-            <span className="text-sm font-medium text-primary">60%</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground">Termin realizacji</span>
-            <span className="text-sm font-medium text-primary">20%</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground">Gwarancja</span>
-            <span className="text-sm font-medium text-primary">20%</span>
-          </div>
+          {data?.criteria ? (
+            data.criteria.map((c: any, i: number) => (
+              <div key={i} className="flex items-center justify-between">
+                <span className="text-sm text-foreground">{c.name}</span>
+                <span className="text-sm font-medium text-primary">{c.weight}%</span>
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">Cena</span>
+                <span className="text-sm font-medium text-primary">60%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">Termin realizacji</span>
+                <span className="text-sm font-medium text-primary">20%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">Gwarancja</span>
+                <span className="text-sm font-medium text-primary">20%</span>
+              </div>
+            </>
+          )}
         </div>
       </AccordionSection>
 

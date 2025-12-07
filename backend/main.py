@@ -15,13 +15,20 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
+    to_render: bool
+    active_section: str
     state: dict
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     try:
-        response_text = await manager.process_user_input(request.message)
-        return ChatResponse(response=response_text, state=manager.get_state())
+        result = await manager.process_user_input(request.message)
+        return ChatResponse(
+            response=result["response"], 
+            to_render=result["to_render"],
+            active_section=str(result["active_section"]),
+            state=manager.get_state()
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

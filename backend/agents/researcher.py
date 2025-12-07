@@ -40,7 +40,7 @@ class LegalResearcher(BaseAgent):
                     {"role": "user", "content": query}
                 ]
                 response = self.perplexity_client.chat.completions.create(
-                    model="llama-3.1-sonar-large-128k-online",
+                    model="sonar-pro",
                     messages=messages,
                 )
                 return f"Perplexity Search Results:\n{response.choices[0].message.content}"

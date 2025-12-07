@@ -1,0 +1,118 @@
+{
+  "evaluation_id": "EVAL-202512070820",
+  "created_at": "2025-12-07T08:20:00.326734",
+  "offers_processed": 1,
+  "winner_offer_id": "formularz_zamowieniowy_poprawiony_v2",
+  "rankings": [
+    {
+      "offer_id": "formularz_zamowieniowy_poprawiony_v2",
+      "total_score": 80.0,
+      "rank": 1,
+      "criteria_scores": [
+        {
+          "criterion_name": "Price",
+          "score": 60.0,
+          "max_points": 60.0,
+          "weight": 60.0,
+          "formula_explanation": "(150000.00 / 150000.00) * 60.0"
+        },
+        {
+          "criterion_name": "Guarantee",
+          "score": 20.0,
+          "max_points": 20.0,
+          "weight": 20.0,
+          "formula_explanation": "(36 / 36) * 20.0"
+        }
+      ]
+    }
+  ],
+  "details": {
+    "formularz_zamowieniowy_poprawiony_v2": {
+      "supplier": {
+        "name": "BudMex S.A.",
+        "address": null,
+        "nip": null,
+        "regon": null,
+        "email": "67e-mailoferty@budmex.pl",
+        "phone": null,
+        "bank_account": null
+      },
+      "financial": {
+        "netto": 121951.22,
+        "vat_rate": 23.0,
+        "brutto_calculated": 150000.0006,
+        "brutto_stated": 150000.0,
+        "currency": "PLN",
+        "is_math_correct": true
+      },
+      "validation": {
+        "offer_id": "formularz_zamowieniowy_poprawiony_v2",
+        "overall_status": "FAILED",
+        "checks": [
+          {
+            "check_name": "Price Math",
+            "status": "PASSED",
+            "message": "Netto + VAT equals Brutto",
+            "severity": "MEDIUM"
+          },
+          {
+            "check_name": "NIP Check",
+            "status": "FAILED",
+            "message": "NIP missing",
+            "severity": "CRITICAL"
+          },
+          {
+            "check_name": "Min Guarantee",
+            "status": "PASSED",
+            "message": "OK",
+            "severity": "MEDIUM"
+          },
+          {
+            "check_name": "Signature",
+            "status": "WARNING",
+            "message": "Digital signature verification not implemented",
+            "severity": "MEDIUM"
+          }
+        ]
+      },
+      "score": {
+        "offer_id": "formularz_zamowieniowy_poprawiony_v2",
+        "total_score": 80.0,
+        "rank": 1,
+        "criteria_scores": [
+          {
+            "criterion_name": "Price",
+            "score": 60.0,
+            "max_points": 60.0,
+            "weight": 60.0,
+            "formula_explanation": "(150000.00 / 150000.00) * 60.0"
+          },
+          {
+            "criterion_name": "Guarantee",
+            "score": 20.0,
+            "max_points": 20.0,
+            "weight": 20.0,
+            "formula_explanation": "(36 / 36) * 20.0"
+          }
+        ]
+      },
+      "compliance": {
+        "offer_id": "formularz_zamowieniowy_poprawiony_v2",
+        "findings": [
+          {
+            "issue": "KRS Status",
+            "risk_level": "LOW",
+            "recommendation": "Verified (Mock): Active entity."
+          },
+          {
+            "issue": "Tax Arrears",
+            "risk_level": "LOW",
+            "recommendation": "Verified (Mock): No arrears found."
+          }
+        ],
+        "krs_verified": true,
+        "tax_verified": true
+      }
+    }
+  }
+}

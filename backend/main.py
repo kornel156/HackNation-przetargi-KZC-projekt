@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from workflow.manager import WorkflowManager
 import uvicorn
@@ -8,6 +9,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(title="SWZ Architect API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins for development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 manager = WorkflowManager()
 
 class ChatRequest(BaseModel):

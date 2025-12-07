@@ -19,7 +19,7 @@ class WorkflowManager:
             AgentRole.VALIDATOR: Validator(),
         }
 
-    async def process_user_input(self, user_input: str) -> str:
+    async def process_user_input(self, user_input: str) -> Dict[str, Any]:
         # 1. Add user message to history
         self.state.history.append(Message(role=AgentRole.USER, content=user_input))
         
@@ -50,12 +50,19 @@ class WorkflowManager:
         # 4. Update State with Agent Response
         self.state.history.append(Message(role=next_agent_role, content=response_content))
         
-        # 5. Check if we need to auto-transition or if we are waiting for user
-        # For simplicity, we assume every agent response goes back to user unless it's an internal step
-        # But to make it "agentic", we could loop here if the agent didn't ask a question.
-        # For this implementation, we'll keep it simple: User -> Orchestrator -> Agent -> User.
+        # 5. Check if document draft was generated/updated
+        if response.get("document_draft"):
+            self.state.swz_draft = response["document_draft"]
         
-        return response_content
+        # 6. Return both response and current draft
+        return {
+            "response": response_content,
+            "swz_draft": self.state.swz_draft
+        }
 
     def get_state(self) -> Dict[str, Any]:
         return self.state.model_dump()
+    
+    def update_draft(self, new_draft: str) -> None:
+        """Manually update the SWZ draft"""
+        self.state.swz_draft = new_draft

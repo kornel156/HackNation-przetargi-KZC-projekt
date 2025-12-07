@@ -1,11 +1,27 @@
 import { Upload, FileSpreadsheet, AlertCircle, DollarSign, ShieldCheck, Calendar, SlidersHorizontal, ArrowUpDown, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Header } from "@/components/Header";
 import EvaluationCriteriaCard from "@/components/EvaluationCriteriaCard";
 import OffersTable from "@/components/OffersTable";
+import { useRef } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const OffersAnalysis = () => {
+  const swzFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSwzFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      console.log("Pobrano plik SWZ:", file.name, file.type);
+      // TODO: Obsługa pliku SWZ
+    }
+  };
+
   const evaluationCriteria = [
     {
       icon: DollarSign,
@@ -32,34 +48,7 @@ const OffersAnalysis = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header - taki sam styl jak na stronie generatora SWZ */}
-      <header className="h-16 border-b border-border bg-card px-4 flex items-center justify-between shadow-soft">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <FileText className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="font-semibold text-lg text-foreground">Analiza Ofert Przetargowych</span>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Link to="/">
-            <Button variant="outline" size="sm" className="gap-2">
-              <FileText className="w-4 h-4" />
-              Generator SWZ
-            </Button>
-          </Link>
-          <div className="flex items-center gap-3 pl-4 border-l border-border">
-            <div className="text-right">
-              <p className="text-sm font-medium text-foreground">Jan Kowalski</p>
-              <p className="text-xs text-muted-foreground">Urząd Miejski</p>
-            </div>
-            <Avatar className="h-9 w-9">
-              <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=Jan" />
-              <AvatarFallback>JK</AvatarFallback>
-            </Avatar>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Header Section */}
@@ -74,13 +63,47 @@ const OffersAnalysis = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground hidden sm:block">
-                Obsługiwane formaty: PDF
-              </span>
-              <Button className="gap-2">
-                <Upload className="w-4 h-4" />
-                Wgraj oferty PDF
-              </Button>
+              <input
+                type="file"
+                ref={swzFileInputRef}
+                onChange={handleSwzFileUpload}
+                accept=".doc,.docx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf"
+                className="hidden"
+              />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      className="gap-2"
+                      onClick={() => swzFileInputRef.current?.click()}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Pobierz plik SWZ
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="p-3">
+                    <p className="font-semibold mb-1">Akceptowalne formaty:</p>
+                    <ul className="text-sm space-y-1">
+                      <li>• .pdf (PDF)</li>
+                      <li>• .doc (Word 97-2003)</li>
+                      <li>• .docx (Word)</li>
+                    </ul>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button className="gap-2">
+                      <Upload className="w-4 h-4" />
+                      Wgraj oferty PDF
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Obsługiwane formaty: PDF</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         </div>

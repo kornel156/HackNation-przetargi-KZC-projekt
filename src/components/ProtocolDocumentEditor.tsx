@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Eye, Save, X, Download, Loader2, ChevronDown, Sparkles } from "lucide-react";
+import { Pencil, Eye, Save, X, Download, Loader2, ChevronDown, Sparkles, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import MDEditor from "@uiw/react-md-editor";
@@ -15,13 +15,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface DocumentEditorProps {
+interface ProtocolDocumentEditorProps {
   content: string;
   onContentChange?: (content: string) => void;
   isLoading?: boolean;
 }
 
-export function DocumentEditor({ content, onContentChange, isLoading = false }: DocumentEditorProps) {
+export function ProtocolDocumentEditor({ content, onContentChange, isLoading = false }: ProtocolDocumentEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -49,7 +49,7 @@ export function DocumentEditor({ content, onContentChange, isLoading = false }: 
     setIsGeneratingPdf(true);
     try {
       const blob = await generatePdf(content);
-      downloadPdf(blob, 'dokument-swz.pdf');
+      downloadPdf(blob, 'protokol-przetargu.pdf');
     } catch (error) {
       console.error('Błąd podczas generowania PDF:', error);
     } finally {
@@ -63,7 +63,7 @@ export function DocumentEditor({ content, onContentChange, isLoading = false }: 
     try {
       const mdast = unified().use(remarkParse).parse(content);
       const docxBlob = await toDocx(mdast);
-      saveAs(docxBlob as Blob, 'dokument-swz.docx');
+      saveAs(docxBlob as Blob, 'protokol-przetargu.docx');
     } catch (error) {
       console.error('Błąd podczas generowania DOCX:', error);
     } finally {
@@ -168,7 +168,7 @@ export function DocumentEditor({ content, onContentChange, isLoading = false }: 
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-primary" />
-              <p className="text-muted-foreground">Ładowanie szablonu SWZ...</p>
+              <p className="text-muted-foreground">Ładowanie szablonu protokołu...</p>
             </div>
           </div>
         ) : isEditing ? (
@@ -186,13 +186,13 @@ export function DocumentEditor({ content, onContentChange, isLoading = false }: 
           <div className="p-8">
             <div className="max-w-3xl mx-auto bg-card rounded-lg shadow-medium p-12 min-h-[800px] animate-fade-in">
               {content ? (
-                <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground">
+                <article className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-foreground prose-p:text-foreground prose-strong:text-foreground prose-li:text-foreground prose-table:text-foreground prose-th:text-foreground prose-td:text-foreground">
                   <ReactMarkdown>{content}</ReactMarkdown>
                 </article>
               ) : (
                 <div className="text-center text-muted-foreground mt-20">
-                  <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p>Rozpocznij rozmowę z asystentem, aby wygenerować dokument SWZ.</p>
+                  <ClipboardList className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                  <p>Rozpocznij rozmowę z asystentem, aby wygenerować protokół przetargu.</p>
                 </div>
               )}
             </div>
